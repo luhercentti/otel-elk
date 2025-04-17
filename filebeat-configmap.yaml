@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+    - type: log
+      paths:
+        - /generatedlogs/logs.json
+      json.keys_under_root: true
+      json.add_error_key: true
+      scan_frequency: 1s      # Scan for new logs every 1 second
+      ignore_older: 10s       # Ignore files older than 10 seconds
+      clean_inactive: 20s     # Clean files after 20 seconds of inactivity
+      close_inactive: 5s      # Close files after 5 seconds of inactivity
+      force_close_files: true  # Force close files to release handles
+      
+    # Test reading from any JSON file
+    - type: log
+      paths:
+        - /generatedlogs/*.json
+        - /generatedlogs/*.txt
+      json.keys_under_root: true
+      json.add_error_key: true
+      scan_frequency: 1s
+      ignore_older: 10s # Add this setting here as well
+
+    processors:
+      - add_host_metadata: ~
+
+    logging.level: debug
+    logging.to_files: true
+    logging.files:
+      path: /generatedlogs
+      name: filebeat-debug.log
+      
+    output.logstash:
+     hosts: ["host.docker.internal:5044"]
+     timeout: 15
+
+  # # Try sending directly to Elasticsearch for testing
+    # output.elasticsearch:
+    #   hosts: ["192.168.18.163:9200"]
+    #   username: "elastic"
+    #   password: "elastic"
+    #   index: "filebeat-%{+yyyy.MM.dd}"

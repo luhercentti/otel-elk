@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+      - name: otel-collector
+        image: otel/opentelemetry-collector-contrib:latest
+        args: ["--config=/etc/otel-collector-config.yaml"]
+        ports:
+        - containerPort: 4317  # gRPC OTLP receiver
+        - containerPort: 4318  # HTTP OTLP receiver
+        volumeMounts:
+        - mountPath: /etc/otel-collector-config.yaml
+          name: otel-config
+          subPath: otel-collector-config.yaml
+        - mountPath: /generatedlogs
+          name: log-volume
+      volumes:
+      - name: otel-config
+        configMap:
+          name: otel-collector-config
+      - name: log-volume
+        hostPath:
+          path: /generatedlogs
+          type: DirectoryOrCreate  # Changed to ensure directory gets created

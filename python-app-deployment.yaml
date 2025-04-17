@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-python-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-python-app
+  template:
+    metadata:
+      labels:
+        app: test-python-app
+    spec:
+      containers:
+      - name: test-app
+        image: python-logging-app:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector:4317"
+        volumeMounts:
+        - mountPath: /generatedlogs
+          name: log-volume
+      volumes:
+      - name: log-volume
+        hostPath:
+          path: /generatedlogs
+          type: Directory
